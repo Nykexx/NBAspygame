@@ -5,8 +5,8 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 
 logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
 
-BOT_TOKEN = os.environ["BOT_TOKEN"]
-WEB_APP_URL = os.environ["WEB_APP_URL"]  # https://your-username.github.io/nba-spy
+BOT_TOKEN = os.environ["8383248985:AAFaukYmGc-kLjCSNJU4K7L5n1ykdQxwJ-U"]
+WEB_APP_URL = os.environ["https://astounding-sunflower-bb9e50.netlify.app/"]  # https://your-username.github.io/nba-spy
 
 
 async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
