@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NBA Spy</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+:root{--bg:#090909;--card:#111;--border:#1e1e1e;--text:#fff;--muted:#4a4a4a;--spy:#e63946;--vh:100svh}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;overflow:hidden}
+
+.screen{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:max(28px, env(safe-area-inset-top)) 22px max(28px, env(safe-area-inset-bottom));
+  height:var(--tg-viewport-stable-height, var(--vh));
+  opacity:0;pointer-events:none;transition:opacity .18s
+}
+.screen.active{opacity:1;pointer-events:all}
+
+/* ── SETUP ── */
+.logo{font-size:3.8rem;font-weight:900;letter-spacing:-4px;line-height:.9;margin-bottom:6px;text-align:center}
+.logo span{color:#e63946}
+.tagline{font-size:.8rem;color:var(--muted);margin-bottom:32px;text-align:center;letter-spacing:1.5px;text-transform:uppercase}
+.lbl{font-size:.65rem;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;align-self:flex-start;width:100%;max-width:360px}
+.pills{display:flex;gap:7px;width:100%;max-width:360px;margin-bottom:22px}
+.pill{flex:1;padding:11px 4px;border:2px solid var(--border);background:transparent;color:var(--muted);border-radius:13px;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .14s;touch-action:manipulation}
+.pill.on{border-color:#fff;color:#fff;background:#181818}
+.pill.diff{font-size:1rem}
+.cnt-row{display:flex;align-items:center;justify-content:center;gap:18px;width:100%;max-width:360px;margin-bottom:28px}
+.cnt-btn{width:50px;height:50px;border:2px solid var(--border);background:transparent;color:#fff;font-size:1.5rem;border-radius:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;transition:border-color .12s}
+.cnt-btn:active{border-color:#fff}
+.cnt-num{font-size:2.6rem;font-weight:900;min-width:52px;text-align:center}
+.btn{width:100%;max-width:360px;padding:18px;background:#fff;color:#000;border:none;border-radius:18px;font-size:1.05rem;font-weight:800;cursor:pointer;letter-spacing:.4px;touch-action:manipulation;transition:transform .1s,opacity .1s}
+.btn:active{transform:scale(.98);opacity:.9}
+.btn-ghost{background:transparent;color:var(--muted);border:2px solid var(--border);margin-top:11px;font-weight:600;font-size:1rem}
+.btn-ghost:active{border-color:#444}
+
+/* ── PROGRESS ── */
+.prog{display:flex;gap:6px;margin-bottom:22px}
+.dot{width:7px;height:7px;border-radius:50%;background:#1e1e1e;transition:background .2s}
+.dot.done{background:#fff}
+.dot.cur{background:#555}
+
+/* ── CARD SHARED ── */
+.card-wrap{width:100%;max-width:340px;flex:1;display:flex;align-items:center;justify-content:center}
+.card{
+  width:min(300px,80vw);
+  height:min(420px, calc(var(--tg-viewport-stable-height, var(--vh)) - 140px));
+  border-radius:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;touch-action:manipulation;position:relative;transition:transform .1s
+}
+.card:active{transform:scale(.97)}
+.card-back{background:var(--card);border:2px solid var(--border)}
+.back-icon{font-size:3rem;opacity:.08;margin-bottom:14px}
+.back-lbl{font-size:.7rem;color:#2a2a2a;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:6px}
+.back-num{font-size:5.5rem;font-weight:900;color:#1a1a1a;line-height:1}
+.back-hint{position:absolute;bottom:22px;font-size:.7rem;color:#252525;letter-spacing:1.5px;text-transform:uppercase}
+.card-player{background:linear-gradient(150deg,#0c1a28 0%,#090913 100%);border:2px solid #162232}
+.card-spy{background:linear-gradient(150deg,#180808 0%,#090909 100%);border:2px solid #320f0f}
+.nbabadge{font-size:.6rem;letter-spacing:4px;color:#1e3a55;text-transform:uppercase;margin-bottom:20px}
+.pname{font-size:1.75rem;font-weight:900;text-align:center;line-height:1.15;padding:0 18px;margin-bottom:10px}
+.pteam{font-size:.75rem;color:#2a4a65;letter-spacing:2px;text-transform:uppercase}
+.spy-emoji{font-size:4.5rem;margin-bottom:18px}
+.spy-lbl{font-size:2.3rem;font-weight:900;color:var(--spy);letter-spacing:7px}
+.hide-hint{position:absolute;bottom:22px;font-size:.7rem;color:#252525;letter-spacing:1.5px;text-transform:uppercase}
+
+@keyframes pop{0%{transform:scale(.88);opacity:0}100%{transform:scale(1);opacity:1}}
+.pop{animation:pop .18s ease-out}
+
+/* ── DISCUSSION ── */
+.disc-icon{font-size:3.2rem;margin-bottom:18px}
+.disc-title{font-size:1.5rem;font-weight:800;margin-bottom:10px;text-align:center}
+.disc-hint{font-size:.88rem;color:var(--muted);text-align:center;line-height:1.65;max-width:270px;margin-bottom:36px}
+
+/* ── RESULT ── */
+.res-lbl{font-size:.65rem;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;text-align:center}
+.res-name{font-size:2rem;font-weight:900;text-align:center;margin-bottom:4px}
+.res-team{font-size:.8rem;color:var(--muted);letter-spacing:1.5px;text-align:center;margin-bottom:28px}
+.spy-reveal{font-size:.9rem;color:var(--spy);margin-bottom:36px;text-align:center;line-height:1.6}
+</style>
+</head>
+<body>
+
+<!-- ════ SETUP ════ -->
+<div class="screen active" id="s-setup">
+  <div class="logo">NBA<br><span>SPY</span></div>
+  <div class="tagline">Найди шпиона среди своих</div>
+
+  <div class="lbl">Режим</div>
+  <div class="pills">
+    <button class="pill on" id="m-current"  onclick="setMode('current',this)">Current</button>
+    <button class="pill"    id="m-alltime"  onclick="setMode('alltime',this)">All-Time</button>
+  </div>
+
+  <div class="lbl">Сложность&nbsp;&nbsp;<span style="color:#333;font-size:.6rem;letter-spacing:1px">1=популярные · 5=неизвестные</span></div>
+  <div class="pills">
+    <button class="pill diff on" onclick="setDiff(1,this)">1</button>
+    <button class="pill diff"    onclick="setDiff(2,this)">2</button>
+    <button class="pill diff"    onclick="setDiff(3,this)">3</button>
+    <button class="pill diff"    onclick="setDiff(4,this)">4</button>
+    <button class="pill diff"    onclick="setDiff(5,this)">5</button>
+  </div>
+
+  <div class="lbl">Количество игроков</div>
+  <div class="cnt-row">
+    <button class="cnt-btn" onclick="chgCount(-1)">−</button>
+    <div class="cnt-num" id="cnt">4</div>
+    <button class="cnt-btn" onclick="chgCount(1)">+</button>
+  </div>
+
+  <button class="btn" onclick="startGame()">Начать игру</button>
+</div>
+
+<!-- ════ DEAL ════ -->
+<div class="screen" id="s-deal">
+  <div class="prog" id="prog1"></div>
+  <div class="card-wrap">
+    <div class="card card-back" onclick="revealCard()">
+      <div class="back-icon">🏀</div>
+      <div class="back-lbl">Игрок</div>
+      <div class="back-num" id="deal-num">1</div>
+      <div class="back-hint">Нажми</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ REVEAL ════ -->
+<div class="screen" id="s-reveal">
+  <div class="prog" id="prog2"></div>
+  <div class="card-wrap">
+    <div class="card pop" id="rev-card" onclick="nextCard()">
+      <div id="rev-content"></div>
+      <div class="hide-hint">Нажми чтобы скрыть</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ DISCUSSION ════ -->
+<div class="screen" id="s-disc">
+  <div class="disc-icon">🕵️</div>
+  <div class="disc-title">Найдите шпиона!</div>
+  <p class="disc-hint">Задавайте вопросы об игроке НБА.<br>Шпион не знает кто это — попробуйте его раскрыть.</p>
+  <button class="btn" onclick="showResult()">Раскрыть ответ</button>
+  <button class="btn btn-ghost" onclick="goHome()">В меню</button>
+</div>
+
+<!-- ════ RESULT ════ -->
+<div class="screen" id="s-result">
+  <div class="res-lbl">Загаданный игрок</div>
+  <div class="res-name" id="r-name"></div>
+  <div class="res-team" id="r-team"></div>
+  <div class="spy-reveal" id="r-spy"></div>
+  <button class="btn" onclick="startGame()">Играть снова</button>
+  <button class="btn btn-ghost" onclick="goHome()">В меню</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  TELEGRAM WEB APP INIT
+// ══════════════════════════════════════════════════════════
+const tg = window.Telegram?.WebApp;
+
+(function initTg() {
+  if (!tg) return;
+  tg.ready();
+  tg.expand();
+  tg.setHeaderColor('#090909');
+  tg.setBackgroundColor('#090909');
+
+  // Sync viewport height to CSS variable
+  function syncVh() {
+    const h = tg.viewportStableHeight || window.innerHeight;
+    document.documentElement.style.setProperty('--tg-viewport-stable-height', h + 'px');
+  }
+  tg.onEvent('viewportChanged', syncVh);
+  syncVh();
+})();
+
+function haptic(style) {
+  tg?.HapticFeedback?.impactOccurred(style || 'light');
+}
+function hapticNotify(type) {
+  tg?.HapticFeedback?.notificationOccurred(type || 'success');
+}
+
+// Back button handling
+const screenBack = {
+  's-deal':    () => show('s-setup'),
+  's-reveal':  () => nextCard(),
+  's-disc':    () => show('s-setup'),
+  's-result':  () => show('s-setup'),
+};
+if (tg?.BackButton) {
+  tg.BackButton.onClick(() => {
+    const active = document.querySelector('.screen.active');
+    const fn = active && screenBack[active.id];
+    if (fn) fn();
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+//  PLAYERS DATABASE  —  208 players
+//  lv: 1=superstar → 5=obscure    c: 1=currently active
+// ══════════════════════════════════════════════════════════
+const DB=[
+// ── LVL 1 · SUPERSTARS ────────────────────────────────────
+{n:"LeBron James",        t:"Los Angeles Lakers",     lv:1,c:1},
+{n:"Stephen Curry",       t:"Golden State Warriors",  lv:1,c:1},
+{n:"Kevin Durant",        t:"Phoenix Suns",           lv:1,c:1},
+{n:"Giannis Antetokounmpo",t:"Milwaukee Bucks",       lv:1,c:1},
+{n:"Nikola Jokic",        t:"Denver Nuggets",         lv:1,c:1},
+{n:"Luka Doncic",         t:"Los Angeles Lakers",     lv:1,c:1},
+{n:"Joel Embiid",         t:"Philadelphia 76ers",     lv:1,c:1},
+{n:"Jayson Tatum",        t:"Boston Celtics",         lv:1,c:1},
+{n:"Anthony Davis",       t:"Los Angeles Lakers",     lv:1,c:1},
+{n:"Damian Lillard",      t:"Milwaukee Bucks",        lv:1,c:1},
+{n:"Jimmy Butler",        t:"Golden State Warriors",  lv:1,c:1},
+{n:"Kawhi Leonard",       t:"Los Angeles Clippers",   lv:1,c:1},
+{n:"Devin Booker",        t:"Phoenix Suns",           lv:1,c:1},
+{n:"Trae Young",          t:"Atlanta Hawks",          lv:1,c:1},
+{n:"Ja Morant",           t:"Memphis Grizzlies",      lv:1,c:1},
+{n:"Zion Williamson",     t:"New Orleans Pelicans",   lv:1,c:1},
+{n:"Shai Gilgeous-Alexander",t:"OKC Thunder",         lv:1,c:1},
+{n:"Donovan Mitchell",    t:"Cleveland Cavaliers",    lv:1,c:1},
+{n:"James Harden",        t:"Los Angeles Clippers",   lv:1,c:1},
+{n:"Kyrie Irving",        t:"Dallas Mavericks",       lv:1,c:1},
+{n:"Victor Wembanyama",   t:"San Antonio Spurs",      lv:1,c:1},
+{n:"Anthony Edwards",     t:"Minnesota Timberwolves", lv:1,c:1},
+{n:"Jaylen Brown",        t:"Boston Celtics",         lv:1,c:1},
+{n:"Tyrese Haliburton",   t:"Indiana Pacers",         lv:1,c:1},
+{n:"Karl-Anthony Towns",  t:"New York Knicks",        lv:1,c:1},
+{n:"Michael Jordan",      t:"Chicago Bulls",          lv:1,c:0},
+{n:"Kobe Bryant",         t:"Los Angeles Lakers",     lv:1,c:0},
+{n:"Shaquille O'Neal",    t:"Los Angeles Lakers",     lv:1,c:0},
+{n:"Magic Johnson",       t:"Los Angeles Lakers",     lv:1,c:0},
+{n:"Larry Bird",          t:"Boston Celtics",         lv:1,c:0},
+{n:"Tim Duncan",          t:"San Antonio Spurs",      lv:1,c:0},
+{n:"Dirk Nowitzki",       t:"Dallas Mavericks",       lv:1,c:0},
+{n:"Kevin Garnett",       t:"Minnesota Timberwolves", lv:1,c:0},
+{n:"Allen Iverson",       t:"Philadelphia 76ers",     lv:1,c:0},
+{n:"Dwyane Wade",         t:"Miami Heat",             lv:1,c:0},
+{n:"Charles Barkley",     t:"Phoenix Suns",           lv:1,c:0},
+{n:"Hakeem Olajuwon",     t:"Houston Rockets",        lv:1,c:0},
+{n:"Kareem Abdul-Jabbar", t:"Los Angeles Lakers",     lv:1,c:0},
+{n:"Scottie Pippen",      t:"Chicago Bulls",          lv:1,c:0},
+{n:"Bill Russell",        t:"Boston Celtics",         lv:1,c:0},
+// ── LVL 2 · ALL-STARS ────────────────────────────────────
+{n:"Jalen Brunson",       t:"New York Knicks",        lv:2,c:1},
+{n:"De'Aaron Fox",        t:"San Antonio Spurs",      lv:2,c:1},
+{n:"Bam Adebayo",         t:"Miami Heat",             lv:2,c:1},
+{n:"Pascal Siakam",       t:"Indiana Pacers",         lv:2,c:1},
+{n:"Zach LaVine",         t:"Chicago Bulls",          lv:2,c:1},
+{n:"DeMar DeRozan",       t:"Sacramento Kings",       lv:2,c:1},
+{n:"Jrue Holiday",        t:"Boston Celtics",         lv:2,c:1},
+{n:"CJ McCollum",         t:"New Orleans Pelicans",   lv:2,c:1},
+{n:"Bradley Beal",        t:"Phoenix Suns",           lv:2,c:1},
+{n:"Andrew Wiggins",      t:"Golden State Warriors",  lv:2,c:1},
+{n:"Brandon Ingram",      t:"New Orleans Pelicans",   lv:2,c:1},
+{n:"Tyler Herro",         t:"Miami Heat",             lv:2,c:1},
+{n:"Darius Garland",      t:"Cleveland Cavaliers",    lv:2,c:1},
+{n:"Scottie Barnes",      t:"Toronto Raptors",        lv:2,c:1},
+{n:"Evan Mobley",         t:"Cleveland Cavaliers",    lv:2,c:1},
+{n:"Franz Wagner",        t:"Orlando Magic",          lv:2,c:1},
+{n:"Paolo Banchero",      t:"Orlando Magic",          lv:2,c:1},
+{n:"RJ Barrett",          t:"New York Knicks",        lv:2,c:1},
+{n:"Anfernee Simons",     t:"Portland Trail Blazers", lv:2,c:1},
+{n:"Cade Cunningham",     t:"Detroit Pistons",        lv:2,c:1},
+{n:"Jalen Green",         t:"Houston Rockets",        lv:2,c:1},
+{n:"Alperen Sengun",      t:"Houston Rockets",        lv:2,c:1},
+{n:"Rudy Gobert",         t:"Minnesota Timberwolves", lv:2,c:1},
+{n:"Domantas Sabonis",    t:"Sacramento Kings",       lv:2,c:1},
+{n:"Paul George",         t:"Philadelphia 76ers",     lv:2,c:1},
+{n:"Russell Westbrook",   t:"Oklahoma City Thunder",  lv:2,c:0},
+{n:"Chris Bosh",          t:"Miami Heat",             lv:2,c:0},
+{n:"Vince Carter",        t:"Toronto Raptors",        lv:2,c:0},
+{n:"Paul Pierce",         t:"Boston Celtics",         lv:2,c:0},
+{n:"Ray Allen",           t:"Boston Celtics",         lv:2,c:0},
+{n:"Carmelo Anthony",     t:"New York Knicks",        lv:2,c:0},
+{n:"Tracy McGrady",       t:"Toronto Raptors",        lv:2,c:0},
+{n:"Steve Nash",          t:"Phoenix Suns",           lv:2,c:0},
+{n:"Jason Kidd",          t:"New Jersey Nets",        lv:2,c:0},
+{n:"Gary Payton",         t:"Seattle SuperSonics",    lv:2,c:0},
+{n:"Patrick Ewing",       t:"New York Knicks",        lv:2,c:0},
+{n:"David Robinson",      t:"San Antonio Spurs",      lv:2,c:0},
+{n:"Isiah Thomas",        t:"Detroit Pistons",        lv:2,c:0},
+{n:"Clyde Drexler",       t:"Portland Trail Blazers", lv:2,c:0},
+{n:"Dominique Wilkins",   t:"Atlanta Hawks",          lv:2,c:0},
+// ── LVL 3 · STARTERS ────────────────────────────────────
+{n:"OG Anunoby",          t:"New York Knicks",        lv:3,c:1},
+{n:"Mikal Bridges",       t:"New York Knicks",        lv:3,c:1},
+{n:"Josh Hart",           t:"New York Knicks",        lv:3,c:1},
+{n:"Herbert Jones",       t:"New Orleans Pelicans",   lv:3,c:1},
+{n:"Jerami Grant",        t:"Portland Trail Blazers", lv:3,c:1},
+{n:"Kelly Oubre Jr.",     t:"Charlotte Hornets",      lv:3,c:1},
+{n:"Kyle Kuzma",          t:"Washington Wizards",     lv:3,c:1},
+{n:"Gary Trent Jr.",      t:"Milwaukee Bucks",        lv:3,c:1},
+{n:"Immanuel Quickley",   t:"Toronto Raptors",        lv:3,c:1},
+{n:"Lu Dort",             t:"OKC Thunder",            lv:3,c:1},
+{n:"Harrison Barnes",     t:"Sacramento Kings",       lv:3,c:1},
+{n:"Fred VanVleet",       t:"Houston Rockets",        lv:3,c:1},
+{n:"Tobias Harris",       t:"Detroit Pistons",        lv:3,c:1},
+{n:"Keegan Murray",       t:"Sacramento Kings",       lv:3,c:1},
+{n:"Walker Kessler",      t:"Utah Jazz",              lv:3,c:1},
+{n:"Jarrett Allen",       t:"Cleveland Cavaliers",    lv:3,c:1},
+{n:"Chet Holmgren",       t:"OKC Thunder",            lv:3,c:1},
+{n:"Jabari Smith Jr.",    t:"Houston Rockets",        lv:3,c:1},
+{n:"Josh Giddey",         t:"Chicago Bulls",          lv:3,c:1},
+{n:"Norman Powell",       t:"Los Angeles Clippers",   lv:3,c:1},
+{n:"Aaron Gordon",        t:"Denver Nuggets",         lv:3,c:1},
+{n:"Michael Porter Jr.",  t:"Denver Nuggets",         lv:3,c:1},
+{n:"Khris Middleton",     t:"Milwaukee Bucks",        lv:3,c:1},
+{n:"Chris Paul",          t:"Golden State Warriors",  lv:3,c:1},
+{n:"Tyrese Maxey",        t:"Philadelphia 76ers",     lv:3,c:1},
+{n:"Dejounte Murray",     t:"New Orleans Pelicans",   lv:3,c:1},
+{n:"Coby White",          t:"Chicago Bulls",          lv:3,c:1},
+{n:"P.J. Washington",     t:"Dallas Mavericks",       lv:3,c:1},
+{n:"Miles Bridges",       t:"Charlotte Hornets",      lv:3,c:1},
+{n:"Jordan Clarkson",     t:"Utah Jazz",              lv:3,c:1},
+{n:"Pau Gasol",           t:"Los Angeles Lakers",     lv:3,c:0},
+{n:"Tony Parker",         t:"San Antonio Spurs",      lv:3,c:0},
+{n:"Manu Ginobili",       t:"San Antonio Spurs",      lv:3,c:0},
+{n:"John Stockton",       t:"Utah Jazz",              lv:3,c:0},
+{n:"Karl Malone",         t:"Utah Jazz",              lv:3,c:0},
+{n:"Reggie Miller",       t:"Indiana Pacers",         lv:3,c:0},
+{n:"Lamar Odom",          t:"Los Angeles Lakers",     lv:3,c:0},
+{n:"Chauncey Billups",    t:"Detroit Pistons",        lv:3,c:0},
+{n:"Ben Wallace",         t:"Detroit Pistons",        lv:3,c:0},
+{n:"Richard Hamilton",    t:"Detroit Pistons",        lv:3,c:0},
+{n:"Baron Davis",         t:"Golden State Warriors",  lv:3,c:0},
+{n:"Stephon Marbury",     t:"New York Knicks",        lv:3,c:0},
+{n:"Peja Stojakovic",     t:"Sacramento Kings",       lv:3,c:0},
+{n:"Andrei Kirilenko",    t:"Utah Jazz",              lv:3,c:0},
+{n:"Antawn Jamison",      t:"Washington Wizards",     lv:3,c:0},
+// ── LVL 4 · ROLE PLAYERS ─────────────────────────────────
+{n:"Naz Reid",            t:"Minnesota Timberwolves", lv:4,c:1},
+{n:"Kentavious Caldwell-Pope",t:"Orlando Magic",      lv:4,c:1},
+{n:"Malik Monk",          t:"Sacramento Kings",       lv:4,c:1},
+{n:"Nic Claxton",         t:"Brooklyn Nets",          lv:4,c:1},
+{n:"Ben Simmons",         t:"Brooklyn Nets",          lv:4,c:1},
+{n:"Isaiah Stewart",      t:"Detroit Pistons",        lv:4,c:1},
+{n:"Reggie Jackson",      t:"Denver Nuggets",         lv:4,c:1},
+{n:"Josh Richardson",     t:"San Antonio Spurs",      lv:4,c:1},
+{n:"Royce O'Neale",       t:"Brooklyn Nets",          lv:4,c:1},
+{n:"Luke Kennard",        t:"Memphis Grizzlies",      lv:4,c:1},
+{n:"De'Anthony Melton",   t:"Brooklyn Nets",          lv:4,c:1},
+{n:"Jaden Ivey",          t:"Detroit Pistons",        lv:4,c:1},
+{n:"Nikola Vucevic",      t:"Chicago Bulls",          lv:4,c:1},
+{n:"Dennis Schroder",     t:"Golden State Warriors",  lv:4,c:1},
+{n:"Gabe Vincent",        t:"Los Angeles Lakers",     lv:4,c:1},
+{n:"Jordan Poole",        t:"Washington Wizards",     lv:4,c:1},
+{n:"Saddiq Bey",          t:"Atlanta Hawks",          lv:4,c:1},
+{n:"Marc Gasol",          t:"Toronto Raptors",        lv:4,c:0},
+{n:"Derrick Rose",        t:"New York Knicks",        lv:4,c:0},
+{n:"Kyle Lowry",          t:"Charlotte Hornets",      lv:4,c:0},
+{n:"Markieff Morris",     t:"Miami Heat",             lv:4,c:0},
+{n:"Andre Iguodala",      t:"Golden State Warriors",  lv:4,c:0},
+{n:"Patrick Beverley",    t:"Philadelphia 76ers",     lv:4,c:0},
+{n:"Serge Ibaka",         t:"Milwaukee Bucks",        lv:4,c:0},
+{n:"Terrence Ross",       t:"Phoenix Suns",           lv:4,c:0},
+{n:"Shane Battier",       t:"Miami Heat",             lv:4,c:0},
+{n:"Robert Horry",        t:"San Antonio Spurs",      lv:4,c:0},
+{n:"Derek Fisher",        t:"Los Angeles Lakers",     lv:4,c:0},
+{n:"Mario Chalmers",      t:"Miami Heat",             lv:4,c:0},
+{n:"Boris Diaw",          t:"San Antonio Spurs",      lv:4,c:0},
+{n:"Matt Bonner",         t:"San Antonio Spurs",      lv:4,c:0},
+{n:"Bruce Bowen",         t:"San Antonio Spurs",      lv:4,c:0},
+{n:"Ron Artest",          t:"Los Angeles Lakers",     lv:4,c:0},
+{n:"Udonis Haslem",       t:"Miami Heat",             lv:4,c:0},
+{n:"Luke Walton",         t:"Los Angeles Lakers",     lv:4,c:0},
+// ── LVL 5 · OBSCURE ──────────────────────────────────────
+{n:"Killian Hayes",       t:"Detroit Pistons",        lv:5,c:0},
+{n:"Jalen McDaniels",     t:"Charlotte Hornets",      lv:5,c:1},
+{n:"Bones Hyland",        t:"Los Angeles Clippers",   lv:5,c:0},
+{n:"Jaden Springer",      t:"Philadelphia 76ers",     lv:5,c:1},
+{n:"Aleksej Pokusevski",  t:"OKC Thunder",            lv:5,c:0},
+{n:"Xavier Tillman",      t:"Memphis Grizzlies",      lv:5,c:1},
+{n:"Tre Mann",            t:"OKC Thunder",            lv:5,c:1},
+{n:"Daishen Nix",         t:"Houston Rockets",        lv:5,c:1},
+{n:"Udoka Azubuike",      t:"Utah Jazz",              lv:5,c:0},
+{n:"Omer Yurtseven",      t:"Miami Heat",             lv:5,c:0},
+{n:"Quinn Cook",          t:"Golden State Warriors",  lv:5,c:0},
+{n:"Damyean Dotson",      t:"New York Knicks",        lv:5,c:0},
+{n:"Mychal Mulder",       t:"Golden State Warriors",  lv:5,c:0},
+{n:"Svi Mykhailiuk",      t:"OKC Thunder",            lv:5,c:0},
+{n:"Mike Muscala",        t:"OKC Thunder",            lv:5,c:0},
+{n:"Vlatko Cancar",       t:"Denver Nuggets",         lv:5,c:1},
+{n:"Trey Lyles",          t:"Sacramento Kings",       lv:5,c:0},
+{n:"Elijah Hughes",       t:"Utah Jazz",              lv:5,c:0},
+{n:"Isaiah Roby",         t:"OKC Thunder",            lv:5,c:0},
+{n:"Cassius Winston",     t:"Washington Wizards",     lv:5,c:0},
+{n:"Javonte Green",       t:"Chicago Bulls",          lv:5,c:0},
+{n:"Denzel Valentine",    t:"Chicago Bulls",          lv:5,c:0},
+{n:"Alec Burks",          t:"New York Knicks",        lv:5,c:0},
+{n:"Terrence Ferguson",   t:"OKC Thunder",            lv:5,c:0},
+{n:"Emmanuel Mudiay",     t:"Utah Jazz",              lv:5,c:0},
+{n:"Thaddeus Young",      t:"San Antonio Spurs",      lv:5,c:0},
+{n:"Brandon Knight",      t:"Houston Rockets",        lv:5,c:0},
+{n:"Reggie Bullock",      t:"Dallas Mavericks",       lv:5,c:0},
+{n:"Scotty Pippen Jr.",   t:"Memphis Grizzlies",      lv:5,c:1},
+{n:"Jordan Hawkins",      t:"New Orleans Pelicans",   lv:5,c:1},
+{n:"Keyonte George",      t:"Utah Jazz",              lv:5,c:1},
+{n:"Ausar Thompson",      t:"Detroit Pistons",        lv:5,c:1},
+{n:"Amen Thompson",       t:"Houston Rockets",        lv:5,c:1},
+{n:"Brandon Miller",      t:"Charlotte Hornets",      lv:5,c:1},
+{n:"Gradey Dick",         t:"Toronto Raptors",        lv:5,c:1},
+{n:"Taylor Hendricks",    t:"Utah Jazz",              lv:5,c:1},
+{n:"Seth Curry",          t:"Dallas Mavericks",       lv:5,c:0},
+{n:"Damion Lee",          t:"Golden State Warriors",  lv:5,c:0},
+{n:"Gary Harris",         t:"Orlando Magic",          lv:5,c:1},
+{n:"Talen Horton-Tucker", t:"Utah Jazz",              lv:5,c:0},
+{n:"Leandro Bolmaro",     t:"Utah Jazz",              lv:5,c:0},
+{n:"Naz Mitrou-Long",     t:"Utah Jazz",              lv:5,c:0},
+{n:"Day'Ron Sharpe",      t:"Brooklyn Nets",          lv:5,c:1},
+{n:"James Bouknight",     t:"Charlotte Hornets",      lv:5,c:0},
+{n:"Sharife Cooper",      t:"Atlanta Hawks",          lv:5,c:0},
+{n:"Joe Wieskamp",        t:"San Antonio Spurs",      lv:5,c:0},
+{n:"Cam Thomas",          t:"Brooklyn Nets",          lv:5,c:1},
+{n:"Quentin Grimes",      t:"Houston Rockets",        lv:5,c:1},
+];
+
+// ══════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════
+const S = { mode:'current', diff:1, count:4 };
+let G = { player:null, cards:[], idx:0 };
+
+// ══════════════════════════════════════════════════════════
+//  SETUP
+// ══════════════════════════════════════════════════════════
+function setMode(m, el) {
+  S.mode = m;
+  document.querySelectorAll('[id^="m-"]').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  haptic();
+}
+function setDiff(d, el) {
+  S.diff = d;
+  document.querySelectorAll('.diff').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  haptic();
+}
+function chgCount(d) {
+  S.count = Math.max(2, Math.min(10, S.count + d));
+  document.getElementById('cnt').textContent = S.count;
+  haptic();
+}
+
+// ══════════════════════════════════════════════════════════
+//  GAME
+// ══════════════════════════════════════════════════════════
+function pool() {
+  return DB.filter(p => p.lv === S.diff && (S.mode === 'alltime' || p.c === 1));
+}
+
+function startGame() {
+  const p = pool();
+  if (!p.length) {
+    tg?.showAlert('Нет игроков для этих настроек.\nПопробуй All-Time или другую сложность.');
+    return;
+  }
+  haptic('medium');
+  G.player = p[Math.floor(Math.random() * p.length)];
+  const spyAt = Math.floor(Math.random() * S.count);
+  G.cards = Array.from({length: S.count}, (_,i) => i === spyAt ? 'spy' : 'player');
+  G.idx = 0;
+  buildDots();
+  updDeal();
+  show('s-deal');
+}
+
+function buildDots() {
+  ['prog1','prog2'].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = '';
+    for (let i = 0; i < S.count; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      el.appendChild(d);
+    }
+  });
+}
+
+function updDots() {
+  ['prog1','prog2'].forEach(id => {
+    document.querySelectorAll('#'+id+' .dot').forEach((d,i) => {
+      d.className = 'dot' + (i < G.idx ? ' done' : i === G.idx ? ' cur' : '');
+    });
+  });
+}
+
+function updDeal() {
+  document.getElementById('deal-num').textContent = G.idx + 1;
+  updDots();
+}
+
+function revealCard() {
+  haptic('medium');
+  const role = G.cards[G.idx];
+  const card = document.getElementById('rev-card');
+  const cont = document.getElementById('rev-content');
+  card.classList.remove('pop');
+  void card.offsetWidth;
+  card.classList.add('pop');
+  if (role === 'spy') {
+    hapticNotify('warning');
+    card.className = 'card pop card-spy';
+    cont.innerHTML = `<div class="spy-emoji">🕵️</div><div class="spy-lbl">ШПИОН</div>`;
+  } else {
+    card.className = 'card pop card-player';
+    cont.innerHTML = `<div class="nbabadge">NBA PLAYER</div><div class="pname">${G.player.n}</div><div class="pteam">${G.player.t}</div>`;
+  }
+  show('s-reveal');
+}
+
+function nextCard() {
+  haptic('light');
+  G.idx++;
+  if (G.idx >= S.count) {
+    show('s-disc');
+  } else {
+    updDeal();
+    show('s-deal');
+  }
+}
+
+function showResult() {
+  hapticNotify('success');
+  document.getElementById('r-name').textContent = G.player.n;
+  document.getElementById('r-team').textContent = G.player.t;
+  const spies = G.cards.map((r,i) => r==='spy' ? 'Игрок '+(i+1) : null).filter(Boolean).join(', ');
+  document.getElementById('r-spy').innerHTML = `🕵️ Шпион: <strong>${spies}</strong>`;
+  show('s-result');
+}
+
+function goHome() { haptic(); show('s-setup'); }
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  // Telegram BackButton
+  if (tg?.BackButton) {
+    id === 's-setup' ? tg.BackButton.hide() : tg.BackButton.show();
+  }
+}
+</script>
+</body>
+</html>
