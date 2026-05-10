@@ -7,7 +7,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
-:root{--bg:#090909;--card:#111;--border:#1e1e1e;--text:#fff;--muted:#4a4a4a;--spy:#e63946;--vh:100svh}
+:root{--bg:#090909;--card:#111;--border:#1e1e1e;--text:#fff;--muted:#4a4a4a;--spy:#FF6B35;--vh:100svh}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;overflow:hidden}
 
 .screen{
@@ -21,27 +21,36 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 
 /* ── SETUP ── */
 .logo{font-size:3.8rem;font-weight:900;letter-spacing:-4px;line-height:.9;margin-bottom:6px;text-align:center}
-.logo span{color:#e63946}
+.logo span{background:linear-gradient(135deg,#FF8C42,#FF6B35);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .tagline{font-size:.8rem;color:var(--muted);margin-bottom:32px;text-align:center;letter-spacing:1.5px;text-transform:uppercase}
 .lbl{font-size:.65rem;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;align-self:flex-start;width:100%;max-width:360px}
 .pills{display:flex;gap:7px;width:100%;max-width:360px;margin-bottom:22px}
 .pill{flex:1;padding:11px 4px;border:2px solid var(--border);background:transparent;color:var(--muted);border-radius:13px;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .14s;touch-action:manipulation}
-.pill.on{border-color:#fff;color:#fff;background:#181818}
+.pill.on{border-color:var(--spy);color:var(--spy);background:#130a04}
 .pill.diff{font-size:1rem}
 .cnt-row{display:flex;align-items:center;justify-content:center;gap:18px;width:100%;max-width:360px;margin-bottom:28px}
-.cnt-btn{width:50px;height:50px;border:2px solid var(--border);background:transparent;color:#fff;font-size:1.5rem;border-radius:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;transition:border-color .12s}
-.cnt-btn:active{border-color:#fff}
+.cnt-btn{width:50px;height:50px;border:2px solid var(--border);background:transparent;color:#fff;font-size:1.5rem;border-radius:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;transition:border-color .12s,background .12s}
+.cnt-btn:active{border-color:var(--spy);background:#130a04}
 .cnt-num{font-size:2.6rem;font-weight:900;min-width:52px;text-align:center}
-.btn{width:100%;max-width:360px;padding:18px;background:#fff;color:#000;border:none;border-radius:18px;font-size:1.05rem;font-weight:800;cursor:pointer;letter-spacing:.4px;touch-action:manipulation;transition:transform .1s,opacity .1s}
+.btn{width:100%;max-width:360px;padding:18px;background:linear-gradient(135deg,#FF8C42,#FF6B35);color:#fff;border:none;border-radius:18px;font-size:1.05rem;font-weight:800;cursor:pointer;letter-spacing:.4px;touch-action:manipulation;transition:transform .1s,opacity .1s;box-shadow:0 4px 24px rgba(255,107,53,.3)}
 .btn:active{transform:scale(.98);opacity:.9}
-.btn-ghost{background:transparent;color:var(--muted);border:2px solid var(--border);margin-top:11px;font-weight:600;font-size:1rem}
-.btn-ghost:active{border-color:#444}
+.btn-ghost{background:transparent;color:var(--muted);border:2px solid var(--border);box-shadow:none;margin-top:11px;font-weight:600;font-size:1rem}
+.btn-ghost:active{border-color:#555}
+.btn-jazz{display:none;width:100%;max-width:360px;padding:18px;background:linear-gradient(135deg,#6B2D8B,#F9A01B);color:#fff;border:none;border-radius:18px;font-size:1.05rem;font-weight:800;cursor:pointer;margin-top:11px;touch-action:manipulation;letter-spacing:.5px;box-shadow:0 4px 20px rgba(107,45,139,.35)}
+.btn-jazz:active{transform:scale(.98);opacity:.9}
+@keyframes eggPop{0%{transform:scale(0) rotate(-10deg);opacity:0}70%{transform:scale(1.08) rotate(2deg)}100%{transform:scale(1) rotate(0deg);opacity:1}}
+.egg-appear{animation:eggPop .45s cubic-bezier(.34,1.56,.64,1) forwards}
+.egg-dot{width:6px;height:6px;border-radius:50%;background:#1e1e1e;transition:background .15s}
+.egg-dot.lit{background:var(--spy)}
+.egg-dots{display:flex;gap:5px;margin-bottom:8px;height:6px}
+@keyframes logoBounce{0%{transform:scale(1)}40%{transform:scale(.92)}100%{transform:scale(1)}}
+.logo-bounce{animation:logoBounce .18s ease-out}
 
 /* ── PROGRESS ── */
 .prog{display:flex;gap:6px;margin-bottom:22px}
 .dot{width:7px;height:7px;border-radius:50%;background:#1e1e1e;transition:background .2s}
-.dot.done{background:#fff}
-.dot.cur{background:#555}
+.dot.done{background:var(--spy)}
+.dot.cur{background:#444}
 
 /* ── CARD SHARED ── */
 .card-wrap{width:100%;max-width:340px;flex:1;display:flex;align-items:center;justify-content:center}
@@ -52,18 +61,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
   cursor:pointer;touch-action:manipulation;position:relative;transition:transform .1s
 }
 .card:active{transform:scale(.97)}
-.card-back{background:var(--card);border:2px solid var(--border)}
-.back-icon{font-size:3rem;opacity:.08;margin-bottom:14px}
+.card-back{background:radial-gradient(ellipse at 35% 25%,#181818,#0d0d0d);border:2px solid #222;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.back-icon{font-size:3rem;opacity:.1;margin-bottom:14px}
 .back-lbl{font-size:.7rem;color:#2a2a2a;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:6px}
-.back-num{font-size:5.5rem;font-weight:900;color:#1a1a1a;line-height:1}
-.back-hint{position:absolute;bottom:22px;font-size:.7rem;color:#252525;letter-spacing:1.5px;text-transform:uppercase}
-.card-player{background:linear-gradient(150deg,#0c1a28 0%,#090913 100%);border:2px solid #162232}
-.card-spy{background:linear-gradient(150deg,#180808 0%,#090909 100%);border:2px solid #320f0f}
+.back-num{font-size:5.5rem;font-weight:900;color:#1c1c1c;line-height:1}
+.back-hint{position:absolute;bottom:22px;font-size:.7rem;color:#272727;letter-spacing:1.5px;text-transform:uppercase}
+.card-player{background:linear-gradient(150deg,#0c1c2e 0%,#060c18 100%);border:2px solid #18304a;box-shadow:0 0 40px rgba(24,107,181,.1),inset 0 0 60px rgba(0,0,0,.3)}
+.card-spy{background:linear-gradient(150deg,#1c0a04 0%,#080306 100%);border:2px solid #3d1208;box-shadow:0 0 40px rgba(255,107,53,.12),inset 0 0 60px rgba(0,0,0,.3)}
 .nbabadge{font-size:.6rem;letter-spacing:4px;color:#1e3a55;text-transform:uppercase;margin-bottom:20px}
 .pname{font-size:1.75rem;font-weight:900;text-align:center;line-height:1.15;padding:0 18px;margin-bottom:10px}
 .pteam{font-size:.75rem;color:#2a4a65;letter-spacing:2px;text-transform:uppercase}
 .spy-emoji{font-size:4.5rem;margin-bottom:18px}
-.spy-lbl{font-size:2.3rem;font-weight:900;color:var(--spy);letter-spacing:7px}
+.spy-lbl{font-size:2.3rem;font-weight:900;color:var(--spy);letter-spacing:7px;text-shadow:0 0 30px rgba(255,107,53,.4)}
 .hide-hint{position:absolute;bottom:22px;font-size:.7rem;color:#252525;letter-spacing:1.5px;text-transform:uppercase}
 
 @keyframes pop{0%{transform:scale(.88);opacity:0}100%{transform:scale(1);opacity:1}}
@@ -85,7 +94,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 
 <!-- ════ SETUP ════ -->
 <div class="screen active" id="s-setup">
-  <div class="logo">NBA<br><span>SPY</span></div>
+  <div class="egg-dots" id="egg-dots"></div>
+  <div class="logo" id="logo-tap" onclick="easterEgg()">NBA<br><span>SPY</span></div>
   <div class="tagline">Найди шпиона среди своих</div>
 
   <div class="lbl">Режим</div>
@@ -111,6 +121,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
   </div>
 
   <button class="btn" onclick="startGame()">Начать игру</button>
+  <button class="btn-jazz" id="btn-jazz" onclick="startJazz()">🎷 Utah Jazz · Secret Level</button>
 </div>
 
 <!-- ════ DEAL ════ -->
@@ -343,6 +354,7 @@ const DB=[
 {n:"Buddy Hield",             t:"Golden State Warriors",  lv:2,c:1},
 {n:"Marcus Smart",            t:"Memphis Grizzlies",      lv:2,c:1},
 {n:"Mike Conley",             t:"Minnesota Timberwolves", lv:2,c:1},
+{n:"Lauri Markkanen",         t:"Utah Jazz",              lv:2,c:1},
 {n:"Deandre Ayton",           t:"Portland Trail Blazers", lv:2,c:1},
 {n:"Myles Turner",            t:"Indiana Pacers",         lv:2,c:1},
 {n:"Derrick White",           t:"Boston Celtics",         lv:2,c:1},
@@ -436,6 +448,7 @@ const DB=[
 {n:"Chet Holmgren",           t:"OKC Thunder",            lv:3,c:1},
 {n:"Jabari Smith Jr.",        t:"Houston Rockets",        lv:3,c:1},
 {n:"Josh Giddey",             t:"Chicago Bulls",          lv:3,c:1},
+{n:"Matas Buzelis",           t:"Chicago Bulls",          lv:3,c:1},
 {n:"Norman Powell",           t:"Los Angeles Clippers",   lv:3,c:1},
 {n:"Aaron Gordon",            t:"Denver Nuggets",         lv:3,c:1},
 {n:"Michael Porter Jr.",      t:"Denver Nuggets",         lv:3,c:1},
@@ -466,11 +479,8 @@ const DB=[
 {n:"Derrick Jones Jr.",       t:"Los Angeles Clippers",   lv:3,c:1},
 {n:"Markieff Morris",         t:"Miami Heat",             lv:3,c:0},
 {n:"Terrence Ross",           t:"Phoenix Suns",           lv:3,c:0},
-// historical (45)
-{n:"Joe Dumars",              t:"Detroit Pistons",        lv:3,c:0},
-{n:"Dennis Johnson",          t:"Boston Celtics",         lv:3,c:0},
+// historical (41)
 {n:"Mark Aguirre",            t:"Dallas Mavericks",       lv:3,c:0},
-{n:"Alex English",            t:"Denver Nuggets",         lv:3,c:0},
 {n:"Danny Ainge",             t:"Boston Celtics",         lv:3,c:0},
 {n:"Bill Laimbeer",           t:"Detroit Pistons",        lv:3,c:0},
 {n:"Vinnie Johnson",          t:"Detroit Pistons",        lv:3,c:0},
@@ -509,7 +519,6 @@ const DB=[
 {n:"Doc Rivers",              t:"Atlanta Hawks",          lv:3,c:0},
 {n:"Stacey Augmon",           t:"Atlanta Hawks",          lv:3,c:0},
 {n:"Mookie Blaylock",         t:"Atlanta Hawks",          lv:3,c:0},
-{n:"Dominique Wilkins",       t:"Atlanta Hawks",          lv:3,c:0},
 // ── LVL 4 · ROLE PLAYERS ─────────────────────────────────
 {n:"Mario Chalmers",      t:"Miami Heat",             lv:4,c:0},
 {n:"Matt Bonner",         t:"San Antonio Spurs",      lv:4,c:0},
@@ -591,6 +600,101 @@ const DB=[
 {n:"Cam Thomas",          t:"Brooklyn Nets",          lv:5,c:1},
 {n:"Quentin Grimes",      t:"Houston Rockets",        lv:5,c:1},
 ];
+
+// ══════════════════════════════════════════════════════════
+//  JAZZ SECRET LEVEL DATABASE — all-time Utah Jazz players
+// ══════════════════════════════════════════════════════════
+const JAZZ_DB=[
+  {n:"John Stockton",       t:"Utah Jazz"},
+  {n:"Karl Malone",         t:"Utah Jazz"},
+  {n:"Pete Maravich",       t:"New Orleans Jazz"},
+  {n:"Adrian Dantley",      t:"Utah Jazz"},
+  {n:"Mark Eaton",          t:"Utah Jazz"},
+  {n:"Darrell Griffith",    t:"Utah Jazz"},
+  {n:"Thurl Bailey",        t:"Utah Jazz"},
+  {n:"Jeff Malone",         t:"Utah Jazz"},
+  {n:"Blue Edwards",        t:"Utah Jazz"},
+  {n:"Jeff Hornacek",       t:"Utah Jazz"},
+  {n:"Bryon Russell",       t:"Utah Jazz"},
+  {n:"Andrei Kirilenko",    t:"Utah Jazz"},
+  {n:"Deron Williams",      t:"Utah Jazz"},
+  {n:"Carlos Boozer",       t:"Utah Jazz"},
+  {n:"Paul Millsap",        t:"Utah Jazz"},
+  {n:"Derrick Favors",      t:"Utah Jazz"},
+  {n:"Mehmet Okur",         t:"Utah Jazz"},
+  {n:"C.J. Miles",          t:"Utah Jazz"},
+  {n:"Gordon Hayward",      t:"Utah Jazz"},
+  {n:"Joe Ingles",          t:"Utah Jazz"},
+  {n:"Rudy Gobert",         t:"Utah Jazz"},
+  {n:"Donovan Mitchell",    t:"Utah Jazz"},
+  {n:"Mike Conley",         t:"Utah Jazz"},
+  {n:"Bojan Bogdanovic",    t:"Utah Jazz"},
+  {n:"Royce O'Neale",       t:"Utah Jazz"},
+  {n:"Georges Niang",       t:"Utah Jazz"},
+  {n:"Jordan Clarkson",     t:"Utah Jazz"},
+  {n:"Lauri Markkanen",     t:"Utah Jazz"},
+  {n:"Walker Kessler",      t:"Utah Jazz"},
+  {n:"Keyonte George",      t:"Utah Jazz"},
+  {n:"Taylor Hendricks",    t:"Utah Jazz"},
+  {n:"Udoka Azubuike",      t:"Utah Jazz"},
+  {n:"Elijah Hughes",       t:"Utah Jazz"},
+  {n:"Emmanuel Mudiay",     t:"Utah Jazz"},
+  {n:"Talen Horton-Tucker", t:"Utah Jazz"},
+  {n:"Leandro Bolmaro",     t:"Utah Jazz"},
+];
+
+// ══════════════════════════════════════════════════════════
+//  EASTER EGG — 5 taps on logo → Jazz secret level
+// ══════════════════════════════════════════════════════════
+let eggTaps = 0, eggTimer = null, eggUnlocked = false;
+
+function easterEgg() {
+  haptic('light');
+  const logo = document.getElementById('logo-tap');
+  logo.classList.remove('logo-bounce');
+  void logo.offsetWidth;
+  logo.classList.add('logo-bounce');
+
+  clearTimeout(eggTimer);
+  eggTaps++;
+  renderEggDots();
+
+  if (eggTaps >= 5) {
+    eggTaps = 0;
+    eggUnlocked = true;
+    renderEggDots();
+    const btn = document.getElementById('btn-jazz');
+    btn.style.display = 'block';
+    btn.classList.remove('egg-appear');
+    void btn.offsetWidth;
+    btn.classList.add('egg-appear');
+    hapticNotify('success');
+    tg?.showAlert('🎷 Секретный уровень разблокирован!\nТолько игроки Utah Jazz.');
+  } else {
+    eggTimer = setTimeout(() => { eggTaps = 0; renderEggDots(); }, 1800);
+  }
+}
+
+function renderEggDots() {
+  const wrap = document.getElementById('egg-dots');
+  wrap.innerHTML = '';
+  for (let i = 0; i < 5; i++) {
+    const d = document.createElement('div');
+    d.className = 'egg-dot' + (i < eggTaps ? ' lit' : '');
+    wrap.appendChild(d);
+  }
+}
+
+function startJazz() {
+  haptic('medium');
+  G.player = JAZZ_DB[Math.floor(Math.random() * JAZZ_DB.length)];
+  const spyAt = Math.floor(Math.random() * S.count);
+  G.cards = Array.from({length: S.count}, (_, i) => i === spyAt ? 'spy' : 'player');
+  G.idx = 0;
+  buildDots();
+  updDeal();
+  show('s-deal');
+}
 
 // ══════════════════════════════════════════════════════════
 //  STATE
